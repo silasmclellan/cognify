@@ -10,7 +10,7 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen">
       <nav className="flex items-center justify-between px-10 py-5" style={{ borderBottom: '1px solid var(--border)' }}>
-        <span style={{ fontSize: 13, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>Cognify</span>
+        <span style={{ fontSize: 13, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>Pansophia</span>
         <div className="flex items-center gap-6">
           {authed ? (
             <>
@@ -42,7 +42,7 @@ export default function Home() {
           <em style={{ fontStyle: 'italic', color: 'var(--accent)' }}>to you</em>
         </h1>
         <p style={{ fontSize: 20, marginBottom: 48, maxWidth: 560, color: 'var(--text-muted)', lineHeight: 1.7 }}>
-          Tell us what you want to learn. Cognify builds a complete, personalised curriculum &mdash; syllabus, lessons, homework, and quizzes &mdash; drawn from the world&rsquo;s best academic sources.
+          Tell us what you want to learn. Pansophia builds a complete, personalised curriculum &mdash; syllabus, lessons, homework, and quizzes &mdash; drawn from the world&rsquo;s best academic sources.
         </p>
         <Link href={authed ? '/onboarding' : '/signup'}>
           <button className="btn-primary" style={{ fontSize: 19, padding: '14px 44px' }}>
@@ -108,7 +108,7 @@ export default function Home() {
       </section>
 
       <footer style={{ textAlign: 'center', paddingBottom: 32, color: 'var(--text-faint)', fontSize: 13, letterSpacing: '0.05em' }}>
-        &copy; 2025 Cognify &mdash; AI-Powered Learning Platform
+        &copy; 2025 Pansophia &mdash; AI-Powered Learning Platform
       </footer>
     </div>
   );

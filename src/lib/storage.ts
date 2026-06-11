@@ -1,6 +1,6 @@
 import { Course, OnboardingData } from '@/types';
 
-const COURSES_KEY = 'cognify_courses';
+const COURSES_KEY = 'pansophia_courses';
 
 export function saveCourse(course: Course): void {
   const courses = getCourses();

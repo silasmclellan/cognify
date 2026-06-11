@@ -165,7 +165,7 @@ export default function OnboardingPage() {
           <div style={{ background: 'linear-gradient(135deg, var(--accent), #8b5cf6)', borderRadius: 10, padding: '6px 10px' }}>
             <Brain size={20} color="white" />
           </div>
-          <span className="text-xl font-bold gradient-text">Cognify</span>
+          <span className="text-xl font-bold gradient-text">Pansophia</span>
         </Link>
         <div className="flex items-center gap-3">
           {steps.map((s, i) => (
@@ -193,7 +193,7 @@ export default function OnboardingPage() {
           {step === 0 && (
             <div>
               <h1 className="text-4xl font-bold mb-3">What do you want to learn?</h1>
-              <p className="mb-8" style={{ color: 'var(--text-muted)' }}>Be as specific or broad as you like — Cognify will build the perfect curriculum.</p>
+              <p className="mb-8" style={{ color: 'var(--text-muted)' }}>Be as specific or broad as you like — Pansophia will build the perfect curriculum.</p>
               <input
                 className="input-field text-xl mb-4"
                 style={{ padding: '18px 20px' }}

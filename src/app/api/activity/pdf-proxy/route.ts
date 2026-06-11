@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
   try {
     const upstream = await fetch(pdfUrl, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; Cognify/1.0; educational platform)',
+        'User-Agent': 'Mozilla/5.0 (compatible; Pansophia/1.0; educational platform)',
         'Accept': 'application/pdf,*/*',
       },
       redirect: 'follow',

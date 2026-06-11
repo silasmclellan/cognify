@@ -64,7 +64,7 @@ async function searchSemanticScholar(query: string): Promise<AcademicPaper[]> {
   const url = `https://api.semanticscholar.org/graph/v1/paper/search?query=${encodeURIComponent(query)}&fields=title,abstract,authors,year,citationCount,openAccessPdf,externalIds,url&limit=8`;
   try {
     const res = await fetch(url, {
-      headers: { 'User-Agent': 'Cognify/1.0 (educational platform; contact: education@cognify.app)' },
+      headers: { 'User-Agent': 'Pansophia/1.0 (educational platform; contact: education@pansophia.app)' },
     });
     if (!res.ok) return [];
     const data = await res.json();
@@ -109,7 +109,7 @@ async function searchSemanticScholar(query: string): Promise<AcademicPaper[]> {
 async function searchArXiv(query: string): Promise<AcademicPaper[]> {
   const url = `https://export.arxiv.org/api/query?search_query=all:${encodeURIComponent(query)}&start=0&max_results=6&sortBy=relevance`;
   try {
-    const res = await fetch(url, { headers: { 'User-Agent': 'Cognify/1.0' } });
+    const res = await fetch(url, { headers: { 'User-Agent': 'Pansophia/1.0' } });
     if (!res.ok) return [];
     const xml = await res.text();
 
@@ -146,7 +146,7 @@ async function searchArXiv(query: string): Promise<AcademicPaper[]> {
 async function searchCORE(query: string): Promise<AcademicPaper[]> {
   // CORE allows unauthenticated searches with rate limits; add CORE_API_KEY env var for better access
   const apiKey = process.env.CORE_API_KEY;
-  const headers: Record<string, string> = { 'User-Agent': 'Cognify/1.0' };
+  const headers: Record<string, string> = { 'User-Agent': 'Pansophia/1.0' };
   if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
 
   const url = `https://api.core.ac.uk/v3/search/works?q=${encodeURIComponent(query)}&limit=6`;

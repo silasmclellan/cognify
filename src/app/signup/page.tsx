@@ -41,7 +41,7 @@ export default function SignUpPage() {
     <div className="min-h-screen flex flex-col">
       <nav className="flex items-center justify-between px-10 py-5" style={{ borderBottom: '1px solid var(--border)' }}>
         <Link href="/" style={{ fontSize: 13, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, textDecoration: 'none' }}>
-          Cognify
+          Pansophia
         </Link>
       </nav>
 

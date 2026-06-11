@@ -185,7 +185,7 @@ export default function CoursePage({ params }: { params: Promise<{ id: string }>
       {/* Top bar */}
       <nav style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '12px 24px', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
         <Link href="/dashboard" style={{ fontSize: 13, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, textDecoration: 'none' }}>
-          ← Cognify
+          ← Pansophia
         </Link>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontWeight: 700, fontSize: 16, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{course.title}</div>

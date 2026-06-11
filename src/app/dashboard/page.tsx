@@ -73,7 +73,7 @@ export default function DashboardPage() {
     <div className="min-h-screen">
       <nav className="flex items-center justify-between px-10 py-5" style={{ borderBottom: '1px solid var(--border)' }}>
         <Link href="/" style={{ fontSize: 13, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, textDecoration: 'none' }}>
-          Cognify
+          Pansophia
         </Link>
         <div className="flex items-center gap-4">
           <span style={{ fontSize: 15, color: 'var(--text-muted)' }}>{session?.user?.name}</span>

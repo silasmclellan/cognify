@@ -49,7 +49,7 @@ export async function getCourseRemote(id: string): Promise<Course | null> {
 }
 
 // localStorage helpers (guest mode)
-const LS_KEY = 'cognify_courses';
+const LS_KEY = 'pansophia_courses';
 
 export function getCoursesLocal(): Course[] {
   if (typeof window === 'undefined') return [];
