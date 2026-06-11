@@ -1,27 +1,22 @@
 /**
  * Auth-aware course storage.
- * When signed in → persists to SQLite via API.
+ * When signed in → persists to Neon via API.
  * When guest → falls back to localStorage.
  */
 
 import { Course } from '@/types';
 
-async function isSignedIn(): Promise<boolean> {
-  try {
-    const res = await fetch('/api/auth/session');
-    const data = await res.json();
-    return !!data?.user;
-  } catch {
-    return false;
-  }
-}
-
-export async function saveCourseRemote(course: Course): Promise<void> {
-  await fetch('/api/courses', {
+export async function saveCourseRemote(course: Course): Promise<{ ok: boolean; limitReached?: boolean; plan?: string }> {
+  const res = await fetch('/api/courses', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(course),
   });
+  if (res.status === 402) {
+    const data = await res.json();
+    return { ok: false, limitReached: true, plan: data.plan };
+  }
+  return { ok: res.ok };
 }
 
 export async function updateCourseRemote(course: Course): Promise<void> {

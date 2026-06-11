@@ -1,4 +1,4 @@
-import { OnboardingData } from '@/types';
+import { OnboardingData, Lesson } from '@/types';
 
 const timeMap: Record<string, string> = {
   '20min': '20 minutes per day',
@@ -136,4 +136,71 @@ Return exactly 5 multiple-choice questions:
     }
   ]
 }`;
+}
+
+export function buildRemediationPrompt(
+  lesson: Lesson,
+  score: number,
+  topic: string,
+  depth: string,
+): string {
+  const lessonId = lesson.id;
+  return `A student scored ${score}% on a quiz and needs extra practice on this lesson.
+
+COURSE TOPIC: ${topic}
+DEPTH: ${depth}
+LESSON TITLE: ${lesson.title}
+LESSON OBJECTIVES: ${lesson.objectives.join('; ')}
+
+Create a focused remediation lesson that re-teaches the concepts differently.
+- Approach the same material from a new angle (analogies, simpler breakdowns, worked examples)
+- Break down the most likely confused concepts step by step
+- Include additional hands-on practice activities
+
+Return ONLY valid JSON:
+{
+  "id": "rem_${lessonId}",
+  "weekNumber": ${lesson.weekNumber},
+  "lessonNumber": ${lesson.lessonNumber},
+  "title": "Review: ${lesson.title}",
+  "description": "Targeted review and extra practice to reinforce understanding",
+  "objectives": ${JSON.stringify(lesson.objectives)},
+  "estimatedMinutes": 30,
+  "isRemediation": true,
+  "activities": [
+    {
+      "type": "exercise",
+      "title": "Activity title",
+      "description": "Activity description",
+      "estimatedMinutes": 10
+    }
+  ],
+  "homework": "Optional additional practice"
+}`;
+}
+
+/** Compute a mastery grade from an object of quiz scores (0-100 each). */
+export function computeMastery(scores: Record<string, number>): {
+  average: number;
+  grade: string;
+  label: string;
+  color: string;
+} {
+  const values = Object.values(scores);
+  if (values.length === 0) {
+    return { average: 0, grade: '—', label: 'No scores yet', color: 'var(--text-faint)' };
+  }
+
+  const avg = Math.round(values.reduce((a, b) => a + b, 0) / values.length);
+
+  if (avg >= 93) return { average: avg, grade: 'A',  label: 'Excellent',    color: '#22c55e' };
+  if (avg >= 90) return { average: avg, grade: 'A−', label: 'Excellent',    color: '#22c55e' };
+  if (avg >= 87) return { average: avg, grade: 'B+', label: 'Good',         color: '#84cc16' };
+  if (avg >= 83) return { average: avg, grade: 'B',  label: 'Good',         color: '#84cc16' };
+  if (avg >= 80) return { average: avg, grade: 'B−', label: 'Good',         color: '#84cc16' };
+  if (avg >= 77) return { average: avg, grade: 'C+', label: 'Satisfactory', color: '#eab308' };
+  if (avg >= 73) return { average: avg, grade: 'C',  label: 'Satisfactory', color: '#eab308' };
+  if (avg >= 70) return { average: avg, grade: 'C−', label: 'Satisfactory', color: '#eab308' };
+  if (avg >= 60) return { average: avg, grade: 'D',  label: 'Needs Work',   color: '#f97316' };
+  return           { average: avg, grade: 'F',  label: 'Needs Review', color: '#ef4444' };
 }

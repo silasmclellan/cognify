@@ -24,6 +24,7 @@ export default function Home() {
             </>
           ) : (
             <>
+              <Link href="/pricing" style={{ fontSize: 16, color: 'var(--text-muted)', textDecoration: 'none' }}>Pricing</Link>
               <Link href="/signin" style={{ fontSize: 16, color: 'var(--text-muted)', textDecoration: 'none' }}>Sign In</Link>
               <Link href="/signup">
                 <button className="btn-primary" style={{ padding: '8px 20px', fontSize: 15 }}>Get Started</button>

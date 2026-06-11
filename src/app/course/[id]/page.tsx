@@ -3,12 +3,12 @@
 import { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ChevronDown, ChevronUp, CheckCircle, Circle, BookOpen, Award, Clock } from 'lucide-react';
+import { ChevronDown, ChevronUp, CheckCircle, Circle, BookOpen, Award, Clock, RotateCcw } from 'lucide-react';
 import { getCourseRemote, updateCourseRemote, getCourseLocal, saveCourseLocal } from '@/lib/courseStorage';
 import { useSession } from 'next-auth/react';
 import { Course, Lesson, QuizQuestion } from '@/types';
 import ActivityPlayer from '@/components/ActivityPlayer';
-
+import { computeMastery } from '@/lib/prompts';
 
 function renderMarkdown(text: string) {
   return text
@@ -38,40 +38,29 @@ export default function CoursePage({ params }: { params: Promise<{ id: string }>
   const [quizAnswers, setQuizAnswers] = useState<Record<string, number>>({});
   const [quizSubmitted, setQuizSubmitted] = useState(false);
   const [showQuiz, setShowQuiz] = useState(false);
+  const [generatingRemediation, setGeneratingRemediation] = useState(false);
 
   const isAuthed = status === 'authenticated';
 
   const persistCourse = async (updated: Course) => {
-    if (isAuthed) {
-      await updateCourseRemote(updated);
-    } else {
-      saveCourseLocal(updated);
-    }
+    if (isAuthed) await updateCourseRemote(updated);
+    else saveCourseLocal(updated);
     setCourse(updated);
   };
 
   useEffect(() => {
     if (status === 'loading') return;
     async function load() {
-      // Try remote first (if authed), fall back to local cache
       let c: Course | null = null;
-      if (isAuthed) {
-        c = await getCourseRemote(id);
-      }
+      if (isAuthed) c = await getCourseRemote(id);
       if (!c) {
         c = getCourseLocal(id);
-        // If found locally and authed, sync it up to the DB
-        if (c && isAuthed) {
-          await updateCourseRemote(c);
-        }
+        if (c && isAuthed) await updateCourseRemote(c);
       }
       if (!c) { router.push('/dashboard'); return; }
       setCourse(c);
       const firstLesson = c.weeks[0]?.lessons[0];
-      if (firstLesson) {
-        setSelectedLesson(firstLesson);
-        loadLessonContent(firstLesson, c);
-      }
+      if (firstLesson) { setSelectedLesson(firstLesson); loadLessonContent(firstLesson, c); }
     }
     load();
   }, [id, status]);
@@ -91,7 +80,6 @@ export default function CoursePage({ params }: { params: Promise<{ id: string }>
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ lesson, topic: c.topic, depth: c.depth, learningStyles: c.onboardingData.learningStyles }),
       });
-
       const reader = res.body?.getReader();
       const decoder = new TextDecoder();
       let full = '';
@@ -101,7 +89,6 @@ export default function CoursePage({ params }: { params: Promise<{ id: string }>
         full += decoder.decode(value);
         setLessonContent(full);
       }
-
       const updated = { ...c };
       for (const week of updated.weeks) {
         for (const l of week.lessons) {
@@ -141,12 +128,50 @@ export default function CoursePage({ params }: { params: Promise<{ id: string }>
     if (score !== undefined) updated.progress.scores[selectedLesson.id] = score;
     await persistCourse(updated);
 
+    // Auto-advance to next lesson
     let found = false;
     for (const week of updated.weeks) {
       for (const lesson of week.lessons) {
         if (found) { selectLesson(lesson); return; }
         if (lesson.id === selectedLesson.id) found = true;
       }
+    }
+  };
+
+  const generateRemediation = async () => {
+    if (!course || !selectedLesson) return;
+    setGeneratingRemediation(true);
+    try {
+      const res = await fetch('/api/generate-remediation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          lesson: selectedLesson,
+          score: calcScore(),
+          topic: course.topic,
+          depth: course.depth,
+        }),
+      });
+      const data = await res.json();
+      if (!data.lesson) return;
+
+      const updated = { ...course };
+      // Insert the remediation lesson right after the current one
+      for (const week of updated.weeks) {
+        const idx = week.lessons.findIndex(l => l.id === selectedLesson.id);
+        if (idx !== -1) {
+          // Only add if not already present
+          const alreadyHas = week.lessons.some(l => l.id === data.lesson.id);
+          if (!alreadyHas) {
+            week.lessons.splice(idx + 1, 0, data.lesson);
+          }
+          break;
+        }
+      }
+      await persistCourse(updated);
+      selectLesson(data.lesson);
+    } finally {
+      setGeneratingRemediation(false);
     }
   };
 
@@ -163,22 +188,17 @@ export default function CoursePage({ params }: { params: Promise<{ id: string }>
   };
 
   const toggleWeek = (n: number) => {
-    setExpandedWeeks(prev => {
-      const next = new Set(prev);
-      next.has(n) ? next.delete(n) : next.add(n);
-      return next;
-    });
+    setExpandedWeeks(prev => { const s = new Set(prev); s.has(n) ? s.delete(n) : s.add(n); return s; });
   };
 
-  if (!course) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="spinner" />
-    </div>
-  );
+  if (!course) return <div className="min-h-screen flex items-center justify-center"><div className="spinner" /></div>;
 
   const totalLessons = course.weeks.reduce((a, w) => a + w.lessons.length, 0);
   const progress = totalLessons > 0 ? Math.round(course.progress.completedLessons.length / totalLessons * 100) : 0;
   const isCompleted = selectedLesson ? course.progress.completedLessons.includes(selectedLesson.id) : false;
+  const mastery = computeMastery(course.progress.scores);
+  const hasQuizScore = selectedLesson ? course.progress.scores[selectedLesson.id] !== undefined : false;
+  const lessonScore = selectedLesson ? (course.progress.scores[selectedLesson.id] ?? null) : null;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
@@ -196,8 +216,20 @@ export default function CoursePage({ params }: { params: Promise<{ id: string }>
             <span style={{ fontSize: 12, color: 'var(--text-faint)' }}>{progress}%</span>
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: 13, color: 'var(--text-muted)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20, fontSize: 13, color: 'var(--text-muted)' }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><BookOpen size={13} /> {course.progress.completedLessons.length}/{totalLessons}</span>
+          {/* Mastery grade badge */}
+          {mastery.grade !== '—' && (
+            <span style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '3px 10px', borderRadius: 20,
+              background: `${mastery.color}22`,
+              border: `1px solid ${mastery.color}55`,
+              fontSize: 13, fontWeight: 700, color: mastery.color,
+            }}>
+              <Award size={12} /> {mastery.grade} · {mastery.average}%
+            </span>
+          )}
           <span style={{ textTransform: 'capitalize' }}>{course.depth}</span>
         </div>
       </nav>
@@ -205,6 +237,17 @@ export default function CoursePage({ params }: { params: Promise<{ id: string }>
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden', height: 'calc(100vh - 65px)' }}>
         {/* Sidebar */}
         <div style={{ width: 280, flexShrink: 0, overflowY: 'auto', borderRight: '1px solid var(--border)', paddingTop: 16, paddingBottom: 24 }}>
+          {/* Mastery summary */}
+          {mastery.grade !== '—' && (
+            <div style={{ margin: '0 16px 16px', padding: '12px 14px', borderRadius: 6, background: `${mastery.color}11`, border: `1px solid ${mastery.color}33` }}>
+              <div style={{ fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-faint)', marginBottom: 4 }}>Overall Mastery</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                <span style={{ fontSize: 26, fontWeight: 800, color: mastery.color }}>{mastery.grade}</span>
+                <span style={{ fontSize: 14, color: mastery.color }}>{mastery.average}% · {mastery.label}</span>
+              </div>
+            </div>
+          )}
+
           {course.weeks.map(week => (
             <div key={week.weekNumber}>
               <button
@@ -220,6 +263,7 @@ export default function CoursePage({ params }: { params: Promise<{ id: string }>
                   {week.lessons.map(lesson => {
                     const done = course.progress.completedLessons.includes(lesson.id);
                     const active = selectedLesson?.id === lesson.id;
+                    const score = course.progress.scores[lesson.id];
                     return (
                       <button
                         key={lesson.id}
@@ -233,13 +277,18 @@ export default function CoursePage({ params }: { params: Promise<{ id: string }>
                         }}
                       >
                         <span style={{ marginTop: 2, flexShrink: 0 }}>
-                          {done
-                            ? <CheckCircle size={14} color="var(--accent)" />
-                            : <Circle size={14} color="var(--text-faint)" />}
+                          {done ? <CheckCircle size={14} color="var(--accent)" /> : <Circle size={14} color="var(--text-faint)" />}
                         </span>
-                        <span style={{ fontSize: 13, color: active ? 'var(--accent)' : 'var(--text-muted)', lineHeight: 1.4 }}>
-                          {lesson.title}
-                        </span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <span style={{ fontSize: 13, color: active ? 'var(--accent)' : 'var(--text-muted)', lineHeight: 1.4, display: 'block' }}>
+                            {lesson.isRemediation ? '🔁 ' : ''}{lesson.title}
+                          </span>
+                          {score !== undefined && (
+                            <span style={{ fontSize: 11, color: score >= 80 ? '#22c55e' : score >= 60 ? '#eab308' : '#ef4444', marginTop: 2, display: 'block' }}>
+                              {score}% quiz
+                            </span>
+                          )}
+                        </div>
                       </button>
                     );
                   })}
@@ -265,9 +314,18 @@ export default function CoursePage({ params }: { params: Promise<{ id: string }>
                   <span>Lesson {selectedLesson.lessonNumber}</span>
                   <span>·</span>
                   <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Clock size={11} /> ~{selectedLesson.estimatedMinutes} min</span>
+                  {selectedLesson.isRemediation && (
+                    <><span>·</span><span style={{ color: '#eab308' }}>🔁 Remediation</span></>
+                  )}
                 </div>
                 <h2 style={{ fontSize: 34, marginBottom: 12 }}>{selectedLesson.title}</h2>
                 <p style={{ color: 'var(--text-muted)', fontSize: 17, lineHeight: 1.65 }}>{selectedLesson.description}</p>
+                {/* Per-lesson score badge */}
+                {lessonScore !== null && (
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 12, padding: '4px 12px', borderRadius: 20, background: `${lessonScore >= 80 ? '#22c55e' : lessonScore >= 60 ? '#eab308' : '#ef4444'}22`, border: `1px solid ${lessonScore >= 80 ? '#22c55e55' : lessonScore >= 60 ? '#eab30855' : '#ef444455'}`, fontSize: 13, fontWeight: 600, color: lessonScore >= 80 ? '#22c55e' : lessonScore >= 60 ? '#eab308' : '#ef4444' }}>
+                    <Award size={12} /> Quiz score: {lessonScore}%
+                  </div>
+                )}
               </div>
 
               {/* Objectives */}
@@ -354,7 +412,8 @@ export default function CoursePage({ params }: { params: Promise<{ id: string }>
                                 <button key={oi} disabled={quizSubmitted}
                                   onClick={() => !quizSubmitted && setQuizAnswers(a => ({ ...a, [q.id]: oi }))}
                                   style={{
-                                    textAlign: 'left', padding: '12px 16px', borderRadius: 3, fontSize: 15, fontFamily: 'inherit', cursor: quizSubmitted ? 'default' : 'pointer',
+                                    textAlign: 'left', padding: '12px 16px', borderRadius: 3, fontSize: 15, fontFamily: 'inherit',
+                                    cursor: quizSubmitted ? 'default' : 'pointer',
                                     background: correct ? 'rgba(58,107,58,0.12)' : wrong ? 'rgba(139,44,44,0.1)' : selected ? 'var(--accent-bg)' : 'var(--bg-card)',
                                     border: `1px solid ${correct ? 'rgba(58,107,58,0.5)' : wrong ? 'rgba(139,44,44,0.4)' : selected ? 'var(--accent)' : 'var(--border)'}`,
                                     color: correct ? 'var(--success)' : wrong ? 'var(--danger)' : 'var(--text)',
@@ -382,9 +441,23 @@ export default function CoursePage({ params }: { params: Promise<{ id: string }>
                       <div className="card" style={{ padding: '32px 24px', marginTop: 20, textAlign: 'center' }}>
                         <div style={{ fontSize: 40, marginBottom: 8 }}>{calcScore() >= 80 ? '🎉' : calcScore() >= 60 ? '👍' : '📚'}</div>
                         <div style={{ fontSize: 32, fontWeight: 800, marginBottom: 4 }}>{calcScore()}%</div>
-                        <div style={{ color: 'var(--text-muted)' }}>
-                          {calcScore() >= 80 ? 'Excellent work!' : calcScore() >= 60 ? 'Good effort — review and keep going.' : 'Revisit the material and try again.'}
+                        <div style={{ color: 'var(--text-muted)', marginBottom: calcScore() < 70 ? 20 : 0 }}>
+                          {calcScore() >= 80 ? 'Excellent work!' : calcScore() >= 60 ? 'Good effort — keep going.' : 'This material needs more practice.'}
                         </div>
+                        {/* Adaptive remediation offer */}
+                        {calcScore() < 70 && !selectedLesson.isRemediation && (
+                          <button
+                            className="btn-secondary"
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginTop: 4 }}
+                            onClick={generateRemediation}
+                            disabled={generatingRemediation}
+                          >
+                            {generatingRemediation
+                              ? <><div className="spinner" />Generating review lesson…</>
+                              : <><RotateCcw size={14} />Get a personalised review lesson</>
+                            }
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
@@ -396,8 +469,8 @@ export default function CoursePage({ params }: { params: Promise<{ id: string }>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '16px', borderRadius: 3, background: 'var(--accent-bg)', border: '1px solid var(--border-strong)', color: 'var(--accent)', fontSize: 15 }}>
                   <CheckCircle size={17} />
                   Lesson Complete
-                  {course.progress.scores[selectedLesson.id] !== undefined && (
-                    <span style={{ color: 'var(--text-muted)' }}>&nbsp;· Quiz score: {course.progress.scores[selectedLesson.id]}%</span>
+                  {hasQuizScore && (
+                    <span style={{ color: 'var(--text-muted)' }}>&nbsp;· Quiz: {course.progress.scores[selectedLesson.id]}%</span>
                   )}
                 </div>
               ) : (

@@ -147,7 +147,13 @@ export default function OnboardingPage() {
       saveCourseLocal(course);
       // Also persist to DB if signed in
       if (session?.user) {
-        await saveCourseRemote(course);
+        const result = await saveCourseRemote(course);
+        if (!result.ok && result.limitReached) {
+          setGenerating(false);
+          setError('You have reached your course limit. Upgrade your plan to create more courses.');
+          router.push('/pricing');
+          return;
+        }
       }
       router.push(`/course/${courseId}`);
     } catch (e) {
