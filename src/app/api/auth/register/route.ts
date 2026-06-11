@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
 
   await initDb();
 
-  const { rows: existing } = await sql`SELECT id FROM users WHERE email = ${email} LIMIT 1`;
+  const existing = await sql`SELECT id FROM users WHERE email = ${email} LIMIT 1`;
   if (existing.length > 0) {
     return NextResponse.json({ error: 'An account with this email already exists' }, { status: 409 });
   }

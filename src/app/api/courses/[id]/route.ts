@@ -9,7 +9,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
   const { id } = await params;
   await initDb();
-  const { rows } = await sql<{ data: string }>`
+  const rows = await sql`
     SELECT data FROM courses WHERE id = ${id} AND user_id = ${session.user.id} LIMIT 1
   `;
 

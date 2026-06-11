@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
-export default function SignInPage() {
+function SignInForm() {
   const router = useRouter();
   const params = useSearchParams();
   const [email, setEmail] = useState('');
@@ -36,6 +36,54 @@ export default function SignInPage() {
   };
 
   return (
+    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div>
+        <label style={{ display: 'block', fontSize: 13, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-faint)', marginBottom: 8 }}>
+          Email
+        </label>
+        <input
+          type="email"
+          className="input-field"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+          placeholder="you@example.com"
+          required
+          autoFocus
+        />
+      </div>
+
+      <div>
+        <label style={{ display: 'block', fontSize: 13, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-faint)', marginBottom: 8 }}>
+          Password
+        </label>
+        <input
+          type="password"
+          className="input-field"
+          value={password}
+          onChange={e => setPassword(e.target.value)}
+          placeholder="••••••••"
+          required
+        />
+      </div>
+
+      {error && (
+        <p style={{ color: 'var(--danger)', fontSize: 15 }}>{error}</p>
+      )}
+
+      <button
+        type="submit"
+        className="btn-primary"
+        disabled={loading}
+        style={{ marginTop: 8, width: '100%', fontSize: 17, padding: '12px' }}
+      >
+        {loading ? 'Signing in…' : 'Sign In'}
+      </button>
+    </form>
+  );
+}
+
+export default function SignInPage() {
+  return (
     <div className="min-h-screen flex flex-col">
       <nav className="flex items-center justify-between px-10 py-5" style={{ borderBottom: '1px solid var(--border)' }}>
         <Link href="/" style={{ fontSize: 13, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, textDecoration: 'none' }}>
@@ -50,49 +98,9 @@ export default function SignInPage() {
             Sign in to access your courses.
           </p>
 
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div>
-              <label style={{ display: 'block', fontSize: 13, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-faint)', marginBottom: 8 }}>
-                Email
-              </label>
-              <input
-                type="email"
-                className="input-field"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                required
-                autoFocus
-              />
-            </div>
-
-            <div>
-              <label style={{ display: 'block', fontSize: 13, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-faint)', marginBottom: 8 }}>
-                Password
-              </label>
-              <input
-                type="password"
-                className="input-field"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-              />
-            </div>
-
-            {error && (
-              <p style={{ color: 'var(--danger)', fontSize: 15 }}>{error}</p>
-            )}
-
-            <button
-              type="submit"
-              className="btn-primary"
-              disabled={loading}
-              style={{ marginTop: 8, width: '100%', fontSize: 17, padding: '12px' }}
-            >
-              {loading ? 'Signing in…' : 'Sign In'}
-            </button>
-          </form>
+          <Suspense fallback={<div style={{ color: 'var(--text-muted)' }}>Loading…</div>}>
+            <SignInForm />
+          </Suspense>
 
           <div style={{ borderTop: '1px solid var(--border)', marginTop: 32, paddingTop: 24, textAlign: 'center' }}>
             <p style={{ color: 'var(--text-muted)', fontSize: 15 }}>

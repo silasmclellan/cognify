@@ -20,7 +20,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!credentials?.email || !credentials?.password) return null;
 
         await initDb();
-        const { rows } = await sql<DbUser>`
+        const rows = await sql`
           SELECT * FROM users WHERE email = ${credentials.email as string} LIMIT 1
         `;
         const user = rows[0];

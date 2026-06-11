@@ -8,7 +8,7 @@ export async function GET() {
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   await initDb();
-  const { rows } = await sql<{ data: string }>`
+  const rows = await sql`
     SELECT data FROM courses WHERE user_id = ${session.user.id} ORDER BY created_at DESC
   `;
 
