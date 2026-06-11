@@ -1,26 +1,253 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #e8e3d9;
+  --bg-card: #dfd9ce;
+  --bg-card-hover: #d6cfc3;
+  --border: #c8bfb0;
+  --border-strong: #a89880;
+  --text: #2c1f0e;
+  --text-muted: #6b5740;
+  --text-faint: #9c8570;
+  --accent: #5c3d1e;
+  --accent-light: #7a5230;
+  --accent-bg: rgba(92, 61, 30, 0.1);
+  --accent-bg-strong: rgba(92, 61, 30, 0.18);
+  --success: #3a6b3a;
+  --danger: #8b2c2c;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+* { box-sizing: border-box; }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-garamond), 'EB Garamond', Georgia, serif;
+  font-size: 18px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Typography ───────────────────────────────── */
+
+h1, h2, h3, h4 {
+  font-family: var(--font-garamond), Georgia, serif;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+
+.gradient-text {
+  color: var(--accent);
+}
+
+/* ── Cards ────────────────────────────────────── */
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.card-hover {
+  transition: all 0.15s ease;
+}
+
+.card-hover:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-strong);
+}
+
+/* ── Buttons ──────────────────────────────────── */
+
+.btn-primary {
+  background: var(--accent);
+  color: #f5f0e8;
+  border-radius: 3px;
+  padding: 10px 24px;
+  font-family: var(--font-garamond), Georgia, serif;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  transition: all 0.15s ease;
+  border: 1px solid var(--accent);
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background: var(--accent-light);
+  border-color: var(--accent-light);
+}
+
+.btn-primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--text);
+  border-radius: 3px;
+  padding: 10px 24px;
+  font-family: var(--font-garamond), Georgia, serif;
+  font-size: 17px;
+  font-weight: 500;
+  transition: all 0.15s ease;
+  border: 1px solid var(--border-strong);
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  background: var(--bg-card);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ── Inputs ───────────────────────────────────── */
+
+.input-field {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--text);
+  padding: 12px 16px;
+  width: 100%;
+  font-family: var(--font-garamond), Georgia, serif;
+  font-size: 17px;
+  transition: border-color 0.15s;
+  outline: none;
+}
+
+.input-field:focus {
+  border-color: var(--accent);
+  background: #e2dcd2;
+}
+
+.input-field::placeholder {
+  color: var(--text-faint);
+  font-style: italic;
+}
+
+/* ── Chips ────────────────────────────────────── */
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 14px;
+  border-radius: 2px;
+  font-family: var(--font-garamond), Georgia, serif;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-muted);
+}
+
+.chip:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.chip.selected {
+  background: var(--accent-bg);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ── Prose ────────────────────────────────────── */
+
+.prose-dark {
+  color: var(--text);
+  line-height: 1.75;
+  font-size: 18px;
+}
+
+.prose-dark h1, .prose-dark h2, .prose-dark h3 {
+  color: var(--text);
+  margin-top: 1.75em;
+  margin-bottom: 0.5em;
+}
+
+.prose-dark h1 { font-size: 2rem; }
+.prose-dark h2 { font-size: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.3em; }
+.prose-dark h3 { font-size: 1.2rem; }
+
+.prose-dark p { margin-bottom: 1.1em; }
+
+.prose-dark ul, .prose-dark ol {
+  padding-left: 1.5em;
+  margin-bottom: 1em;
+}
+
+.prose-dark li { margin-bottom: 0.4em; }
+
+.prose-dark code {
+  background: var(--accent-bg);
+  padding: 2px 6px;
+  border-radius: 2px;
+  font-size: 0.875em;
+  font-family: monospace;
+  color: var(--accent);
+}
+
+.prose-dark strong { color: var(--text); font-weight: 700; }
+
+.prose-dark blockquote {
+  border-left: 3px solid var(--border-strong);
+  padding-left: 1em;
+  color: var(--text-muted);
+  font-style: italic;
+  margin: 1.25em 0;
+}
+
+/* ── Progress ─────────────────────────────────── */
+
+.progress-bar {
+  height: 3px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+
+/* ── Spinner ──────────────────────────────────── */
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* ── Generating glow ──────────────────────────── */
+
+@keyframes subtle-pulse {
+  0%, 100% { border-color: var(--border); }
+  50% { border-color: var(--border-strong); }
+}
+
+.generating {
+  animation: subtle-pulse 2.5s ease-in-out infinite;
+}
+
+/* ── Divider ──────────────────────────────────── */
+
+.divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 2rem 0;
 }
