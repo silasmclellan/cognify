@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import { sql, initDb } from '@/lib/db';
+import { getDb, initDb } from '@/lib/db';
 import { Course } from '@/types';
 
 export async function GET() {
@@ -8,6 +8,7 @@ export async function GET() {
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   await initDb();
+  const sql = getDb();
   const rows = await sql`
     SELECT data FROM courses WHERE user_id = ${session.user.id} ORDER BY created_at DESC
   `;
@@ -21,6 +22,7 @@ export async function POST(req: NextRequest) {
 
   const course: Course = await req.json();
   await initDb();
+  const sql = getDb();
 
   await sql`
     INSERT INTO courses (id, user_id, data) VALUES (${course.id}, ${session.user.id}, ${JSON.stringify(course)})

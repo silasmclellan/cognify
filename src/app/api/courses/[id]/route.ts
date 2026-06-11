@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import { sql, initDb } from '@/lib/db';
+import { getDb, initDb } from '@/lib/db';
 import { Course } from '@/types';
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -9,6 +9,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
   const { id } = await params;
   await initDb();
+  const sql = getDb();
   const rows = await sql`
     SELECT data FROM courses WHERE id = ${id} AND user_id = ${session.user.id} LIMIT 1
   `;
@@ -24,6 +25,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const { id } = await params;
   const course: Course = await req.json();
   await initDb();
+  const sql = getDb();
 
   await sql`
     INSERT INTO courses (id, user_id, data) VALUES (${id}, ${session.user.id}, ${JSON.stringify(course)})
@@ -39,6 +41,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
 
   const { id } = await params;
   await initDb();
+  const sql = getDb();
   await sql`DELETE FROM courses WHERE id = ${id} AND user_id = ${session.user.id}`;
   return NextResponse.json({ ok: true });
 }

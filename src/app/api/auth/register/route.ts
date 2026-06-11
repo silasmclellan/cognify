@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import { sql, initDb } from '@/lib/db';
+import { getDb, initDb } from '@/lib/db';
 import { randomUUID } from 'crypto';
 
 export async function POST(req: NextRequest) {
@@ -14,6 +14,7 @@ export async function POST(req: NextRequest) {
   }
 
   await initDb();
+  const sql = getDb();
 
   const existing = await sql`SELECT id FROM users WHERE email = ${email} LIMIT 1`;
   if (existing.length > 0) {

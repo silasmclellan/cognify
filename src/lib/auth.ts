@@ -1,7 +1,7 @@
 import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
-import { sql, initDb } from './db';
+import { getDb, initDb } from './db';
 import type { DbUser } from './db';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -20,10 +20,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!credentials?.email || !credentials?.password) return null;
 
         await initDb();
+        const sql = getDb();
         const rows = await sql`
           SELECT * FROM users WHERE email = ${credentials.email as string} LIMIT 1
         `;
-        const user = rows[0];
+        const user = rows[0] as DbUser | undefined;
         if (!user) return null;
 
         const valid = await bcrypt.compare(
